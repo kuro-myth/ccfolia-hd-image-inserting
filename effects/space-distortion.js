@@ -23,7 +23,7 @@
                             <!-- baseFrequency로 자글거림 밀도 조절, seed를 바꾸면 모양이 요동칩니다 -->
                             <feTurbulence id="ccfolia-noise-prop" type="fractalNoise" baseFrequency="0.05 0.95" numOctaves="1" result="noise" seed="0" />
                             <!-- scale="70": 화면을 양옆으로 찢어발기는 왜곡의 한계 강도 (숫자가 클수록 대폭 파괴됨) -->
-                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="150" xChannelSelector="R" yChannelSelector="G" />
+                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="30" xChannelSelector="R" yChannelSelector="G" />
                         </filter>
                     </svg>
                 `;
