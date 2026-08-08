@@ -8,7 +8,7 @@
 
     // 2. 마스터의 깃허브 주소로부터 플레이리스트 동적 로드
     // *테스트 시 본인의 깃허브 raw 주소로 변경하세요.
-    const PLAYLIST_URL = "https://githubusercontent.com";
+    const PLAYLIST_URL = "https://raw.githubusercontent.com/kuro-myth/ccfolia-hd-image-inserting/main/playlist.json";
     let playlist = {};
     try {
         const res = await fetch(PLAYLIST_URL);
