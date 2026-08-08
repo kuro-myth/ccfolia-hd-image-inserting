@@ -1,4 +1,5 @@
 {
   "[폭발]": "https://raw.githubusercontent.com/kuro-myth/ccfolia-hd-image-inserting/main/raw/pngegg.png",
-  "[HO1_각성]": "effects/ho1-awakening.js"
+  "[HO1_각성]": "effects/ho1-awakening.js",
+   "[공간왜곡]": "effects/space-distortion.js"
 }
