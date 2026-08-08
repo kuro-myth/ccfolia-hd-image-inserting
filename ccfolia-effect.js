@@ -13,7 +13,7 @@
     try {
         const res = await fetch(PLAYLIST_URL);
         playlist = await res.json();
-        console.log("연출 플레이리스트 로드 성공:", playlist);
+        console.log("연출 플레이리스트 로드 성공:");
     } catch (e) {
         console.error("플레이리스트 로드 실패.");
         return;
