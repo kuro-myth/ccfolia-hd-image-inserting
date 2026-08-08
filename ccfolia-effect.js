@@ -29,15 +29,20 @@
         const foundKeywords = new Set();
 
         ccObjects.forEach(obj => {
-            // 태그 내부의 글씨나 aria-label, 혹은 자식 태그의 alt 속성 등에서 키워드 탐색
+            // 📌 [여기서부터 교체]
+            // 최상위 태그 내부에서 aria-label 속성을 가진 하위 요소를 저격 탐색합니다.
+            const labelEl = obj.querySelector('[aria-label]');
+            const ariaLabel = labelEl ? labelEl.getAttribute('aria-label') : "";
+            
             const textContent = obj.textContent || "";
-            const ariaLabel = obj.getAttribute('aria-label') || "";
             const imgAlt = obj.querySelector('img') ? obj.querySelector('img').getAttribute('alt') || "" : "";
             
+            // 공백 제거 후 모든 텍스트 단서 결합
             const combinedText = (textContent + ariaLabel + imgAlt).replace(/\s+/g, '');
+            // 📌 [여기까지 교체]
 
-            // 등록된 플레이리스트 키워드가 포함되어 있는지 검사
             for (const keyword in playlist) {
+
                 if (combinedText.includes(keyword)) {
                     foundKeywords.add(keyword);
                     const mediaUrl = playlist[keyword];
