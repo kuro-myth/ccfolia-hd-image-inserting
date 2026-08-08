@@ -53,7 +53,7 @@
                 <div style="position:absolute; top:50%; left:50%; width:40vw; height:40vw; border-radius:50%; background:#ffffff; box-shadow:0 0 50px 30px #ffffff, 0 0 100px 60px #00f0ff, 0 0 200px 100px #3498db; animation: ccfolia-beam-expand 0.5s cubic-bezier(0.1, 0.8, 0.2, 1) forwards, ccfolia-core-fade 3.5s ease-out forwards;"></div>
                 
                 <!-- 2. 전역 화이트아웃 플래시 레이어 (0.4초 뒤늦게 튀어나와 덮치기) -->
-                <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:#ffffff; animation: ccfolia-screen-whiteout 3.5s ease-out forwards; animation-delay: 1.4s; opacity: 0;"></div>
+                <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:#ffffff; animation: ccfolia-screen-whiteout 3.5s ease-out forwards; animation-delay: 0.4s; opacity: 0;"></div>
             `;
             
             // ⏱️ 전체 타임슬롯 청소 (애니메이션 딜레이 0.4초 + 지속 3.5초 = 총 3.9초 뒤 완전 자폭)
