@@ -35,25 +35,26 @@
             // 3. 바깥쪽으로 얼마나 더 멀리 뿜어낼지는 top 값을 마이너스(-) 영역으로 올려서 자유롭게 조절합니다.
             layer.innerHTML = `
                 <!-- 1번 거대 회전 박스 (20초 주행) -->
-                <div style="position:absolute; top:50%; left:50%; width:100%; height:100%; animation: ccfolia-giant-spin1 20s linear infinite; overflow:visible;">
-                    <!-- 정중앙(50%)에서 시작해 상단 밖으로 거대하게(height: 250%) 뻗어나가는 진짜 5배 막대 -->
-                    <div style="position:absolute; bottom:50%; left:50%; width:8px; height:250%; transform:translateX(-50%); animation: ccfolia-light-pulse 2s ease-in-out infinite; background:linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0.7) 40%, transparent); box-shadow:0 -10px 25px #ffffff, 0 -15px 45px #3498db;"></div>
-                </div>
-                
-                <!-- 2번 거대 회전 박스 (32초 역방향 주행) -->
-                <div style="position:absolute; top:50%; left:50%; width:100%; height:100%; animation: ccfolia-giant-spin2 32s linear infinite; overflow:visible;">
-                    <div style="position:absolute; bottom:50%; left:50%; width:6px; height:200%; transform:translateX(-50%); animation: ccfolia-light-pulse 3s ease-in-out infinite; background:linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0.6) 40%, transparent); box-shadow:0 -10px 20px #ffffff, 0 -15px 35px #2ecc71;"></div>
-                </div>
-                
-                <!-- 3번 거대 회전 박스 (45초 주행) -->
-                <div style="position:absolute; top:50%; left:50%; width:100%; height:100%; animation: ccfolia-giant-spin3 45s linear infinite; overflow:visible;">
-                    <div style="position:absolute; bottom:50%; left:50%; width:5px; height:150%; transform:translateX(-50%); animation: ccfolia-light-pulse 2.5s ease-in-out infinite; background:linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0.5) 40%, transparent); box-shadow:0 -10px 15px #ffffff, 0 -15px 30px #3498db;"></div>
-                </div>
-                
-                <!-- 4번 거대 회전 박스 (60초 주행) -->
-                <div style="position:absolute; top:50%; left:50%; width:100%; height:100%; animation: ccfolia-giant-spin4 60s linear infinite; overflow:visible;">
-                    <div style="position:absolute; bottom:50%; left:50%; width:10px; height:100%; transform:translateX(-50%); animation: ccfolia-light-pulse 1.5s ease-in-out infinite; background:linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0.8) 40%, transparent); box-shadow:0 -10px 30px #ffffff, 0 -15px 50px #e74c3c;"></div>
-                </div>
+<div style="position:absolute; top:50%; left:50%; width:100%; height:100%; animation: ccfolia-giant-spin1 20s linear infinite; overflow:visible;">
+    <!-- 💡 보정: 투명도를 100% 꽉 채우고, 하얀색 박스 섀도우를 다중 레이어로 겹쳐 레이저처럼 쨍한 광량을 확보 -->
+    <div style="position:absolute; bottom:50%; left:50%; width:8px; height:250%; transform:translateX(-50%); animation: ccfolia-light-pulse 2s ease-in-out infinite; background: linear-gradient(to top, #ffffff 0%, rgba(255,255,255,0.9) 30%, transparent 100%); box-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff, 0 0 40px #3498db, 0 0 70px #3498db; backdrop-filter: brightness(1.5);"></div>
+</div>
+
+<!-- 2번 거대 회전 박스 (32초 역방향 주행) -->
+<div style="position:absolute; top:50%; left:50%; width:100%; height:100%; animation: ccfolia-giant-spin2 32s linear infinite; overflow:visible;">
+    <div style="position:absolute; bottom:50%; left:50%; width:6px; height:200%; transform:translateX(-50%); animation: ccfolia-light-pulse 3s ease-in-out infinite; background: linear-gradient(to top, #ffffff 0%, rgba(255,255,255,0.9) 30%, transparent 100%); box-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff, 0 0 40px #2ecc71, 0 0 70px #2ecc71; backdrop-filter: brightness(1.5);"></div>
+</div>
+
+<!-- 3번 거대 회전 박스 (45초 주행) -->
+<div style="position:absolute; top:50%; left:50%; width:100%; height:100%; animation: ccfolia-giant-spin3 45s linear infinite; overflow:visible;">
+    <div style="position:absolute; bottom:50%; left:50%; width:5px; height:150%; transform:translateX(-50%); animation: ccfolia-light-pulse 2.5s ease-in-out infinite; background: linear-gradient(to top, #ffffff 0%, rgba(255,255,255,0.9) 30%, transparent 100%); box-shadow: 0 0 8px #ffffff, 0 0 15px #ffffff, 0 0 35px #3498db, 0 0 60px #3498db; backdrop-filter: brightness(1.5);"></div>
+</div>
+
+<!-- 4번 거대 회전 박스 (60초 주행) -->
+<div style="position:absolute; top:50%; left:50%; width:100%; height:100%; animation: ccfolia-giant-spin4 60s linear infinite; overflow:visible;">
+    <div style="position:absolute; bottom:50%; left:50%; width:10px; height:100%; transform:translateX(-50%); animation: ccfolia-light-pulse 1.5s ease-in-out infinite; background: linear-gradient(to top, #ffffff 0%, rgba(255,255,255,1) 40%, transparent 100%); box-shadow: 0 0 12px #ffffff, 0 0 25px #ffffff, 0 0 50px #e74c3c, 0 0 80px #e74c3c; backdrop-filter: brightness(1.5);"></div>
+</div>
+
                 
                 <!-- 캐릭터 발밑 중심축 보조 광원 코어 (토큰 크기 100% 밀착형) -->
                 <div style="position:absolute; top:50%; left:50%; width:100%; height:100%; transform:translate(-50%, -50%); border-radius:50%; background:rgba(255,255,255,0.25); box-shadow:0 0 25px 5px #ffffff, inset 0 0 15px rgba(52,152,219,0.5); filter:blur(1px);"></div>
