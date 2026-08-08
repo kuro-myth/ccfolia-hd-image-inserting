@@ -1,4 +1,4 @@
-// [3단계 필살기: 속도 묵직하게 다운 + 코어 구체까지 완전히 증발하는 화이트아웃 최종본]
+// [3단계 필살기: 중앙 코어 폭발 선행 ➡ 전체 화이트아웃 후속 발동 완벽 타이밍 교정본]
 (function() {
     const EFFECT_ID = "effects/whiteout-beam.js";
 
@@ -6,18 +6,25 @@
         const style = document.createElement('style');
         style.id = 'ccfolia-style-whiteout';
         style.textContent = `
-            /* 💡 보정: 0.3초에서 0.7초로 폭발 팽창 속도를 늦춰 묵직한 중압감을 줍니다 */
+            /* 0.5초 동안 중앙에서 사방으로 콰아아앙 터져나가는 선행 폭발 모션 */
             @keyframes ccfolia-beam-expand {
-                0% { transform: translate(-50%, -50%) scale(0); opacity: 1; filter: blur(8px); }
-                40% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; filter: blur(4px); }
-                100% { transform: translate(-50%, -50%) scale(6); opacity: 1; filter: blur(0px); }
+                0% { transform: translate(-50%, -50%) scale(0); opacity: 1; filter: blur(5px); }
+                30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; filter: blur(2px); }
+                100% { transform: translate(-50%, -50%) scale(5); opacity: 1; filter: blur(0px); }
             }
             
-            /* 💡 핵심 보정: 전체 화면뿐만 아니라 중앙 코어 구체도 같은 타이밍에 사르르 증발하도록 통합 애니메이션 정의 */
-            @keyframes ccfolia-fade-clean {
-                0% { opacity: 1; }
-                40% { opacity: 1; }  /* 약 1.5초 동안은 완전 순백색 화이트아웃 유지 */
-                100% { opacity: 0; } /* 이후 3.5초에 도달할 때까지 부드럽게 완전 증발 */
+            /* 코어 구체 전용 페이드아웃 (화이트아웃 장막이 완전히 걷히기 전까지 자연스럽게 뒤에서 소멸) */
+            @keyframes ccfolia-core-fade {
+                0%, 60% { opacity: 1; }
+                100% { opacity: 0; }
+            }
+            
+            /* 💡 핵심 보정: 전체 화면 화이트아웃 장막은 0.4초 딜레이(대기) 후 순식간에 암전 기습 발동 */
+            @keyframes ccfolia-screen-whiteout {
+                0% { opacity: 0; }
+                5% { opacity: 1; }   /* 0.4초 대기 후 0.05초만에 쾅! 하고 백색 화면 점령 */
+                50% { opacity: 1; }  /* 이후 1.5초간 완벽한 화이트아웃 유지 */
+                100% { opacity: 0; } /* 남은 시간 동안 사르르 원래대로 복구 */
             }
         `;
         document.head.appendChild(style);
@@ -38,22 +45,21 @@
             layer.style.pointerEvents = 'none';
             layer.style.overflow = 'hidden';
             
-            // 💡 해결책: 
-            // 1. 전체 지속 시간을 3.5초(3.5s)로 늘려 연출의 깊이를 더했습니다.
-            // 2. 중앙 폭발 코어 박스에도 'ccfolia-fade-clean 3.5s' 페이드아웃 애니메이션을 동일하게 부여했습니다.
-            //    이제 흰색 화면이 걷힐 때 푸른 광원 코어 구체도 잔상 하나 없이 완벽하게 투명해져 사라집니다.
+            // 💡 바뀐 하이어라키와 타이밍 규칙:
+            // 1. 코어 구체가 0.5초 동안 초고속으로 퍼져나가는 레이저 선포를 때립니다.
+            // 2. 전체 화이트아웃 장막은 'animation-delay: 0.4s'를 주어, 코어가 화면을 거의 다 채울 때쯤 뒤늦게 쾅 덮쳐 가립니다.
             layer.innerHTML = `
-                <!-- 중앙 폭발 코어 (전체 화면과 싱크를 맞춰 3.5초 뒤 자동 완전 증발) -->
-                <div style="position:absolute; top:50%; left:50%; width:40vw; height:40vw; border-radius:50%; background:#ffffff; box-shadow:0 0 50px 30px #ffffff, 0 0 100px 60px #00f0ff, 0 0 200px 100px #3498db; animation: ccfolia-beam-expand 0.7s cubic-bezier(0.1, 0.8, 0.2, 1) forwards, ccfolia-fade-clean 3.5s ease-out forwards;"></div>
+                <!-- 1. 중앙 폭발 코어 (선행 발동) -->
+                <div style="position:absolute; top:50%; left:50%; width:40vw; height:40vw; border-radius:50%; background:#ffffff; box-shadow:0 0 50px 30px #ffffff, 0 0 100px 60px #00f0ff, 0 0 200px 100px #3498db; animation: ccfolia-beam-expand 0.5s cubic-bezier(0.1, 0.8, 0.2, 1) forwards, ccfolia-core-fade 3.5s ease-out forwards;"></div>
                 
-                <!-- 전역 화이트아웃 플래시 레이어 -->
-                <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:#ffffff; animation: ccfolia-fade-clean 3.5s ease-out forwards;"></div>
+                <!-- 2. 전역 화이트아웃 플래시 레이어 (0.4초 뒤늦게 튀어나와 덮치기) -->
+                <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:#ffffff; animation: ccfolia-screen-whiteout 3.5s ease-out forwards; animation-delay: 0.4s; opacity: 0;"></div>
             `;
             
-            // ⏱️ 3.5초 뒤에 엔진 찌꺼기 레이어를 브라우저에서 깔끔하게 청소하는 자동 자폭 타이머
+            // ⏱️ 전체 타임슬롯 청소 (애니메이션 딜레이 0.4초 + 지속 3.5초 = 총 3.9초 뒤 완전 자폭)
             setTimeout(() => {
                 layer.remove();
-            }, 3500);
+            }, 3900);
             
             document.body.appendChild(layer);
             return layer;
