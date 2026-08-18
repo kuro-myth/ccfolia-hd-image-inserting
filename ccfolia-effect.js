@@ -117,6 +117,6 @@
         }
     };
 
-    window.__CCFOLIA_EFFECT_LOOP__ = setInterval(syncLoop, 300);
+    window.__CCFOLIA_EFFECT_LOOP__ = setInterval(syncLoop, 1000);
     console.log("코코폴리아 모듈러 연출 시스템 고도화 완료... 🎲");
 })();
