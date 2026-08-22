@@ -6,7 +6,7 @@
         console.log("기존 코코폴리아 연출 시스템을 재시작합니다.");
     }
 
-    const REPO_BASE = "https://githubusercontent.com";
+    const REPO_BASE = "https://raw.githubusercontent.com/kuro-myth/ccfolia-hd-image-inserting/main/";
     const PLAYLIST_URL = REPO_BASE + "playlist.json";
     
     let playlist = {};
