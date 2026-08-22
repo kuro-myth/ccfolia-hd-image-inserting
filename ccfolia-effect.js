@@ -1,4 +1,4 @@
-// [최적화 완료: 메모리 누수 방지 + 깔끔한 보라색 숫자 연출 엔진]
+// [오리지널 제어 복구 완료: 구조 보존 + 외부 루프 간섭 차단형]
 (async function() {
     if (window.__CCFOLIA_EFFECT_LOOP__) {
         clearTimeout(window.__CCFOLIA_EFFECT_LOOP__);
@@ -48,9 +48,7 @@
                 
                 const combinedText = (textContent + ariaLabel + imgAlt).replace(/\s+/g, '');
 
-                // --------------------------------------------------------
-                // 💡 NumberEffect 숫자 추출 매퍼 (배경 제외 텍스트 전용)
-                // --------------------------------------------------------
+                // 1. NumberEffect 숫자 추출 엔진
                 let isNumberEffect = false;
                 let numKeyword = "";
                 let extractedNumber = "";
@@ -58,7 +56,7 @@
                 const numMatch = combinedText.match(/NumberEffect(\d+)/i);
                 if (numMatch) {
                     isNumberEffect = true;
-                    extractedNumber = numMatch[1]; // 첫 번째 캡처 그룹에서 숫자만 추출
+                    extractedNumber = numMatch[1];
                     numKeyword = `NumberEffect_${extractedNumber}`;
                     foundKeywords.add(numKeyword);
                 }
@@ -92,40 +90,27 @@
 
                     let layer;
 
-                    // [Case 1] 깔끔한 숫자 단독 레이어 생성
+                    // [Case 1] 숫자 단독 레이어 생성
                     if (isNumberEffect) {
                         layer = document.createElement('div');
                         layer.className = 'ccfolia-ghost-layer';
-                        
-                        // 뒷배경 없이 이미지와 동일한 폰트 외곽선 및 보라색 네온 그라데이션 구현
                         layer.innerHTML = `
                             <div style="
-                                position: absolute;
-                                width: 100%;
-                                height: 100%;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
+                                position: absolute; width: 100%; height: 100%;
+                                display: flex; justify-content: center; align-items: center;
                                 font-family: 'Impact', 'Arial Black', sans-serif;
-                                font-size: ${rect.height * 0.7}px; /* 패널 크기에 맞춰 글자 크기 최적화 */
-                                font-weight: 900;
+                                font-size: ${rect.height * 0.7}px; font-weight: 900;
                                 background: linear-gradient(to bottom, #fce4ec 0%, #da70d6 30%, #8a2be2 70%, #4b0082 100%);
-                                -webkit-background-clip: text;
-                                -webkit-text-fill-color: transparent;
+                                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                                 filter: drop-shadow(0px 0px 3px #ffffff) drop-shadow(0px 0px 1px #ffffff);
-                                text-align: center;
-                                user-select: none;
-                                line-height: 1;
+                                text-align: center; user-select: none; line-height: 1;
                             ">${extractedNumber}</div>
                         `;
-                        layer.style.position = 'fixed';
-                        layer.style.zIndex = '99999';
-                        layer.style.pointerEvents = 'none';
+                        layer.style.position = 'fixed'; layer.style.zIndex = '99999'; layer.style.pointerEvents = 'none';
                         document.body.appendChild(layer);
-
                         activeLayers.set(targetKeyword, { type: 'dynamic-number', el: layer });
                     } 
-                    // [Case 2] 외부 .js 스크립트 실행
+                    // [Case 2] 외부 .js 스크립트 가동 (마스터님의 오리지널 코드 구조 100% 보존)
                     else if (effectTarget.endsWith('.js')) {
                         const loaded = await loadExternalEffect(effectTarget);
                         if (loaded && window.__CCFOLIA_EFFECTS__[effectTarget]) {
@@ -135,7 +120,7 @@
                         }
                         activeLayers.set(targetKeyword, { type: effectTarget, el: layer });
                     } 
-                    // [Case 3] 외부 MP4 영상 재생
+                    // [Case 3] 외부 MP4 영상
                     else if (effectTarget.toLowerCase().endsWith('.mp4')) {
                         layer = document.createElement('video');
                         layer.src = effectTarget;
@@ -147,7 +132,7 @@
                         document.body.appendChild(layer);
                         activeLayers.set(targetKeyword, { type: effectTarget, el: layer });
                     } 
-                    // [Case 4] 일반 이미지나 GIF 출력
+                    // [Case 4] 일반 이미지나 GIF
                     else {
                         layer = document.createElement('img');
                         layer.src = effectTarget;
@@ -159,11 +144,18 @@
                     }
                 }
 
-                // [위치 추적 자석 싱크]
+                // [실시간 동기화 및 간섭 차단]
                 const layerInfo = activeLayers.get(targetKeyword);
                 if (layerInfo && layerInfo.el) {
                     if (layerInfo.type.endsWith('.js') && window.__CCFOLIA_EFFECTS__[layerInfo.type]) {
-                        window.__CCFOLIA_EFFECTS__[layerInfo.type].update(layerInfo.el, rect);
+                        
+                        // 💡 [해결 포인트] 만약 연출 파일 내부의 __GLITCH_EXPIRED__ 장부에 등록되어 만료된 키워드라면,
+                        // 외부 엔진이 강제로 update()를 호출하여 화면을 다시 왜곡시키는 현상을 원천 차단합니다.
+                        const isExpired = window.__GLITCH_EXPIRED__ && window.__GLITCH_EXPIRED__.has(targetKeyword);
+                        
+                        if (!isExpired) {
+                            window.__CCFOLIA_EFFECTS__[layerInfo.type].update(layerInfo.el, rect);
+                        }
                     } else {
                         layerInfo.el.style.top = `${rect.top}px`;
                         layerInfo.el.style.left = `${rect.left}px`;
@@ -173,13 +165,14 @@
                 }
             }
 
-            // 패널이 사라지거나 비공개 처리되었을 때 유령 레이어 자동 파괴
+            // 삭제 처리
             for (const [keyword, layerInfo] of activeLayers.entries()) {
                 if (!foundKeywords.has(keyword)) {
                     if (layerInfo.el) layerInfo.el.remove();
                     activeLayers.delete(keyword);
                 }
             }
+
         } catch (err) {
             console.error("루프 에러 발생:", err);
         } finally {
@@ -188,5 +181,5 @@
     };
 
     window.__CCFOLIA_EFFECT_LOOP__ = setTimeout(syncLoop, 1000);
-    console.log("코코폴리아 텍스트 넘버 연출 엔진 세팅 완료... 🎲");
+    console.log("코코폴리아 오리지널 플래그 연동 최적화 완료... 🎲");
 })();
