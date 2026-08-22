@@ -1,4 +1,4 @@
-// [오리지널 제어 복구 완료: 구조 보존 + 외부 루프 간섭 차단형]
+// [최종 진화 완료: 오리지널 플래그 초기화 버그 완전 박멸 버전]
 (async function() {
     if (window.__CCFOLIA_EFFECT_LOOP__) {
         clearTimeout(window.__CCFOLIA_EFFECT_LOOP__);
@@ -79,14 +79,22 @@
 
                 if (!targetKeyword) continue;
 
+                // 🛑 [방어막 1] 오리지널 플래그 검사 - 이미 만료목록에 있다면 외부 루프는 복잡한 처리 다 거치고 즉시 패스
+                if (window.__GLITCH_EXPIRED__ && window.__GLITCH_EXPIRED__.has(targetKeyword)) {
+                    continue;
+                }
+
                 const rect = obj.getBoundingClientRect();
                 if (rect.width === 0 || rect.height === 0) continue;
 
                 const existingLayer = activeLayers.get(targetKeyword);
-                const isElementConnected = existingLayer && existingLayer.el && existingLayer.el.isConnected;
+                
+                // 💡 [버그 교정 포인트] 외부 .js 연출 파일인 경우, 엘리먼트 파괴 여부를 외부 루프가 감시해서 초기화 유발하지 않도록 조건 격리
+                const isScript = effectTarget && effectTarget.endsWith('.js');
+                const isElementConnected = isScript ? !!existingLayer : (existingLayer && existingLayer.el && existingLayer.el.isConnected);
 
                 if (!isElementConnected) {
-                    if (existingLayer && existingLayer.el) existingLayer.el.remove();
+                    if (existingLayer && existingLayer.el && !isScript) existingLayer.el.remove();
 
                     let layer;
 
@@ -110,14 +118,15 @@
                         document.body.appendChild(layer);
                         activeLayers.set(targetKeyword, { type: 'dynamic-number', el: layer });
                     } 
-                    // [Case 2] 외부 .js 스크립트 가동 (마스터님의 오리지널 코드 구조 100% 보존)
-                    else if (effectTarget.endsWith('.js')) {
+                    // [Case 2] 외부 .js 스크립트 가동
+                    else if (isScript) {
                         const loaded = await loadExternalEffect(effectTarget);
                         if (loaded && window.__CCFOLIA_EFFECTS__[effectTarget]) {
                             layer = window.__CCFOLIA_EFFECTS__[effectTarget].create(targetKeyword, obj, rect);
                         } else {
                             continue;
                         }
+                        // 스크립트 형태는 이펙트 자체의 내부 처리를 존중하기 위해 더미 래핑 저장
                         activeLayers.set(targetKeyword, { type: effectTarget, el: layer });
                     } 
                     // [Case 3] 외부 MP4 영상
@@ -144,16 +153,12 @@
                     }
                 }
 
-                // [실시간 동기화 및 간섭 차단]
+                // [위치 자석 싱크 동기화]
                 const layerInfo = activeLayers.get(targetKeyword);
                 if (layerInfo && layerInfo.el) {
                     if (layerInfo.type.endsWith('.js') && window.__CCFOLIA_EFFECTS__[layerInfo.type]) {
-                        
-                        // 💡 [해결 포인트] 만약 연출 파일 내부의 __GLITCH_EXPIRED__ 장부에 등록되어 만료된 키워드라면,
-                        // 외부 엔진이 강제로 update()를 호출하여 화면을 다시 왜곡시키는 현상을 원천 차단합니다.
-                        const isExpired = window.__GLITCH_EXPIRED__ && window.__GLITCH_EXPIRED__.has(targetKeyword);
-                        
-                        if (!isExpired) {
+                        // 만료 확인 검사를 한 번 더 수행하여 완벽 차단
+                        if (!(window.__GLITCH_EXPIRED__ && window.__GLITCH_EXPIRED__.has(targetKeyword))) {
                             window.__CCFOLIA_EFFECTS__[layerInfo.type].update(layerInfo.el, rect);
                         }
                     } else {
@@ -165,21 +170,29 @@
                 }
             }
 
-            // 삭제 처리
+            // ♻️ 패널 삭제/비공개 시 청소 프로세스 전면 수정
             for (const [keyword, layerInfo] of activeLayers.entries()) {
                 if (!foundKeywords.has(keyword)) {
-                    if (layerInfo.el) layerInfo.el.remove();
+                    // 일반 미디어 레이어만 외부 엔진이 지우고, .js 스크립트 엘리먼트는 지우지 않고 방치 (스스로 죽게 놔둠)
+                    if (layerInfo.el && !layerInfo.type.endsWith('.js')) {
+                        layerInfo.el.remove();
+                    }
                     activeLayers.delete(keyword);
+                    
+                    // 화면에서 실제 패널 문구가 완전히 사라졌을 때에만 만료 플래그를 지워 복구시킵니다.
+                    if (window.__GLITCH_EXPIRED__) {
+                        window.__GLITCH_EXPIRED__.delete(keyword);
+                    }
                 }
             }
 
         } catch (err) {
             console.error("루프 에러 발생:", err);
-        } finally {
+        } {
             window.__CCFOLIA_EFFECT_LOOP__ = setTimeout(syncLoop, 1000);
         }
     };
 
     window.__CCFOLIA_EFFECT_LOOP__ = setTimeout(syncLoop, 1000);
-    console.log("코코폴리아 오리지널 플래그 연동 최적화 완료... 🎲");
+    console.log("코코폴리아 오리지널 생명주기 완벽 보존 버전 가동... 🎲");
 })();
