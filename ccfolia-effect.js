@@ -1,12 +1,12 @@
+// [메모리 누수 및 비동기 락 완벽 해결 버전]
 (async function() {
-    // 1. 중복 실행 방지 및 청소
     if (window.__CCFOLIA_EFFECT_LOOP__) {
-        clearInterval(window.__CCFOLIA_EFFECT_LOOP__);
+        clearTimeout(window.__CCFOLIA_EFFECT_LOOP__); // setInterval 대신 구조 변경
         document.querySelectorAll('.ccfolia-ghost-layer').forEach(el => el.remove());
         console.log("기존 코코폴리아 연출 시스템을 재시작합니다.");
     }
 
-    const REPO_BASE = "https://raw.githubusercontent.com/kuro-myth/ccfolia-hd-image-inserting/main/";
+    const REPO_BASE = "https://githubusercontent.com";
     const PLAYLIST_URL = REPO_BASE + "playlist.json";
     
     let playlist = {};
@@ -19,14 +19,13 @@
         return;
     }
 
-    // 외부 연출 파일(.js)들을 동적으로 불러오기 위한 로더 함수
     window.__CCFOLIA_EFFECTS__ = window.__CCFOLIA_EFFECTS__ || {};
     async function loadExternalEffect(scriptName) {
-        if (window.__CCFOLIA_EFFECTS__[scriptName]) return true; // 이미 로드됨
+        if (window.__CCFOLIA_EFFECTS__[scriptName]) return true;
         try {
             const res = await fetch(REPO_BASE + scriptName);
             const text = await res.text();
-            eval(text); // 브라우저 메모리에 연출 오토로딩
+            eval(text);
             return true;
         } catch(e) {
             console.error(`${scriptName} 연출 파일 로드 에러:`, e);
@@ -36,87 +35,99 @@
 
     const activeLayers = new Map(); 
 
-    // 2. 0.3초 주기 통합 감시 루프
+    // 구조 개조: 무조건 이전 감시가 완벽히 끝난 뒤에만 1초 뒤 다음 감시를 예약 (병목 원천 차단)
     const syncLoop = async () => {
-        const ccObjects = document.querySelectorAll('[data-field-object]');
-        const foundKeywords = new Set();
+        try {
+            const ccObjects = document.querySelectorAll('[data-field-object]');
+            const foundKeywords = new Set();
 
-        for (const obj of ccObjects) {
-            const labelEl = obj.querySelector('[aria-label]');
-            const ariaLabel = labelEl ? labelEl.getAttribute('aria-label') : "";
-            const textContent = obj.textContent || "";
-            const imgAlt = obj.querySelector('img') ? obj.querySelector('img').getAttribute('alt') || "" : "";
-            
-            const combinedText = (textContent + ariaLabel + imgAlt).replace(/\s+/g, '');
+            for (const obj of ccObjects) {
+                const labelEl = obj.querySelector('[aria-label]');
+                const ariaLabel = labelEl ? labelEl.getAttribute('aria-label') : "";
+                const textContent = obj.textContent || "";
+                const imgAlt = obj.querySelector('img') ? obj.querySelector('img').getAttribute('alt') || "" : "";
+                
+                const combinedText = (textContent + ariaLabel + imgAlt).replace(/\s+/g, '');
 
-            for (const keyword in playlist) {
-                if (combinedText.includes(keyword)) {
-                    foundKeywords.add(keyword);
-                    const effectTarget = playlist[keyword];
+                for (const keyword in playlist) {
+                    if (combinedText.includes(keyword)) {
+                        foundKeywords.add(keyword);
+                        const effectTarget = playlist[keyword];
 
-                    const rect = obj.getBoundingClientRect();
-                    if (rect.width === 0 || rect.height === 0) continue;
+                        const rect = obj.getBoundingClientRect();
+                        if (rect.width === 0 || rect.height === 0) continue;
 
-                    // 레이어가 없는 경우 최초 빌드 프로세스
-                    if (!activeLayers.has(keyword)) {
-                        let layer;
+                        // 💡 [교정 부위] 장부에 있더라도 실제 브라우저 화면(DOM)에서 강제로 지워졌다면 재생성하도록 조건 강화
+                        const existingLayer = activeLayers.get(keyword);
+                        const isElementConnected = existingLayer && existingLayer.el && existingLayer.el.isConnected;
 
-                        // Case A: 분리된 외부 자바스크립트 연출 파일인 경우 (.js)
-                        if (effectTarget.endsWith('.js')) {
-                            const loaded = await loadExternalEffect(effectTarget);
-                            if (loaded && window.__CCFOLIA_EFFECTS__[effectTarget]) {
-                                layer = window.__CCFOLIA_EFFECTS__[effectTarget].create(keyword, obj, rect);
-                            } else {
-                                continue; // 로드 실패 시 스킵
+                        if (!isElementConnected) {
+                            // 기존에 찌꺼기가 남아있었다면 청소
+                            if (existingLayer && existingLayer.el) existingLayer.el.remove();
+
+                            let layer;
+                            if (effectTarget.endsWith('.js')) {
+                                const loaded = await loadExternalEffect(effectTarget);
+                                if (loaded && window.__CCFOLIA_EFFECTS__[effectTarget]) {
+                                    layer = window.__CCFOLIA_EFFECTS__[effectTarget].create(keyword, obj, rect);
+                                } else {
+                                    continue;
+                                }
+                            } 
+                            else if (effectTarget.toLowerCase().endsWith('.mp4')) {
+                                layer = document.createElement('video');
+                                layer.src = effectTarget;
+                                layer.className = 'ccfolia-ghost-layer';
+                                layer.autoplay = true; layer.loop = true; layer.muted = true;
+                                layer.setAttribute('playsinline', '');
+                                layer.style.objectFit = 'cover';
+                                layer.style.position = 'fixed'; layer.style.zIndex = '99999'; layer.style.pointerEvents = 'none';
+                                document.body.appendChild(layer);
+                            } 
+                            else {
+                                layer = document.createElement('img');
+                                layer.src = effectTarget;
+                                layer.className = 'ccfolia-ghost-layer';
+                                layer.style.objectFit = 'cover';
+                                layer.style.position = 'fixed'; layer.style.zIndex = '99999'; layer.style.pointerEvents = 'none';
+                                document.body.appendChild(layer);
                             }
-                        } 
-                        // Case B: 일반 외부 MP4 동영상인 경우
-                        else if (effectTarget.toLowerCase().endsWith('.mp4')) {
-                            layer = document.createElement('video');
-                            layer.src = effectTarget;
-                            layer.autoplay = true; layer.loop = true; layer.muted = true;
-                            layer.setAttribute('playsinline', '');
-                            layer.style.objectFit = 'cover';
-                            layer.style.position = 'fixed'; layer.style.zIndex = '99999'; layer.style.pointerEvents = 'none';
-                            document.body.appendChild(layer);
-                        } 
-                        // Case C: 일반 이미지나 GIF인 경우
-                        else {
-                            layer = document.createElement('img');
-                            layer.src = effectTarget;
-                            layer.style.objectFit = 'cover';
-                            layer.style.position = 'fixed'; layer.style.zIndex = '99999'; layer.style.pointerEvents = 'none';
-                            document.body.appendChild(layer);
+
+                            activeLayers.set(keyword, { type: effectTarget, el: layer });
                         }
 
-                        activeLayers.set(keyword, { type: effectTarget, el: layer });
-                    }
-
-                    // [실시간 동기화]: 위치 및 크기 자석 싱크 업데이트 위임
-                    const layerInfo = activeLayers.get(keyword);
-                    if (layerInfo.type.endsWith('.js') && window.__CCFOLIA_EFFECTS__[layerInfo.type]) {
-                        // 자바스크립트 연출 파일 내부에 정의된 고유의 update 공식 실행
-                        window.__CCFOLIA_EFFECTS__[layerInfo.type].update(layerInfo.el, rect);
-                    } else {
-                        // 일반 미디어 파일은 엔진이 기본 1:1 싱크 제어
-                        layerInfo.el.style.top = `${rect.top}px`;
-                        layerInfo.el.style.left = `${rect.left}px`;
-                        layerInfo.el.style.width = `${rect.width}px`;
-                        layerInfo.el.style.height = `${rect.height}px`;
+                        // 실시간 동기화 위임
+                        const layerInfo = activeLayers.get(keyword);
+                        if (layerInfo && layerInfo.el) {
+                            if (layerInfo.type.endsWith('.js') && window.__CCFOLIA_EFFECTS__[layerInfo.type]) {
+                                window.__CCFOLIA_EFFECTS__[layerInfo.type].update(layerInfo.el, rect);
+                            } else {
+                                layerInfo.el.style.top = `${rect.top}px`;
+                                layerInfo.el.style.left = `${rect.left}px`;
+                                layerInfo.el.style.width = `${rect.width}px`;
+                                layerInfo.el.style.height = `${rect.height}px`;
+                            }
+                        }
                     }
                 }
             }
-        }
 
-        // 삭제 처리
-        for (const [keyword, layerInfo] of activeLayers.entries()) {
-            if (!foundKeywords.has(keyword)) {
-                layerInfo.el.remove();
-                activeLayers.delete(keyword);
+            // 삭제 처리
+            for (const [keyword, layerInfo] of activeLayers.entries()) {
+                if (!foundKeywords.has(keyword)) {
+                    if (layerInfo.el) layerInfo.el.remove();
+                    activeLayers.delete(keyword);
+                }
             }
+        } catch (err) {
+            console.error("루프 실행 중 에러 발생 (무시하고 다음 루프 진행):", err);
+        } finally {
+            // 💡 현재 감시 사이클이 정상적이든 에러가 났든 완전히 끝난 시점으로부터 '정확히 1초 뒤'에 다음 루프를 실행하도록 예약
+            window.__CCFOLIA_EFFECT_LOOP__ = setTimeout(syncLoop, 1000);
         }
     };
 
-    window.__CCFOLIA_EFFECT_LOOP__ = setInterval(syncLoop, 1000);
-    console.log("코코폴리아 모듈러 연출 시스템 고도화 완료... 🎲");
+    // 최초 루프 가동
+    window.__CCFOLIA_EFFECT_LOOP__ = setTimeout(syncLoop, 1000);
+    console.log("코코폴리아 안전성 최적화 모듈러 연출 시스템 고도화 완료... 🎲");
 })();
